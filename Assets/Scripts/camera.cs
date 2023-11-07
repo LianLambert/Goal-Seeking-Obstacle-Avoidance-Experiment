@@ -1,53 +1,36 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class camera : MonoBehaviour
 {
-    public float moveSpeed = 10f;
-    public float rotationSpeed = 2f;
-    public float maxTiltAngle = 45f;
+    public float moveSpeed = 5f; // Speed of camera movement
+    public float sensitivity = 2f; // Mouse rotation sensitivity
+    private Vector3 rotation = Vector3.zero;
 
-    private Transform cameraTransform;
-    private Vector3 cameraOffset;
-
-    private void Start()
+    void Update()
     {
-        cameraTransform = Camera.main.transform;
-        cameraOffset = cameraTransform.position - transform.position;
-    }
-
-    private void Update()
-    {
-        // Camera movement based on WASD keys
+        // Handle camera movement
         float horizontalInput = Input.GetAxis("Horizontal");
         float verticalInput = Input.GetAxis("Vertical");
 
-        Vector3 moveDirection = new Vector3(horizontalInput, 0f, verticalInput).normalized;
-        Vector3 moveVector = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0) * moveDirection;
-        transform.position += moveVector * moveSpeed * Time.deltaTime;
+        Vector3 moveDirection = new Vector3(horizontalInput, verticalInput, 0f) * moveSpeed * Time.deltaTime;
+        transform.Translate(moveDirection);
 
-        // Calculate the camera look rotation based on the target object
-        Vector3 targetPosition = transform.position + Vector3.up * cameraOffset.y;
-        Vector3 lookDirection = targetPosition - cameraTransform.position;
+        // Handle camera rotation with the mouse
+        float mouseX = Input.GetAxis("Mouse X");
+        float mouseY = Input.GetAxis("Mouse Y");
 
-        if (lookDirection != Vector3.zero)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(lookDirection, Vector3.up);
+        rotation.x -= mouseY * sensitivity;
+        rotation.y += mouseX * sensitivity;
 
-            // Apply a limited tilt angle to the camera
-            float currentTilt = Vector3.SignedAngle(Vector3.up, cameraOffset.normalized, Vector3.forward);
-            float tiltChange = -Input.GetAxis("Mouse Y") * rotationSpeed;
+        // Limit the vertical rotation to prevent camera flipping
+        rotation.x = Mathf.Clamp(rotation.x, -90f, 90f);
+        Vector3 finalRotation = new Vector3(rotation.x + 30f, rotation.y + 45f, rotation.z);
 
-            if (Mathf.Abs(currentTilt + tiltChange) <= maxTiltAngle)
-            {
-                cameraOffset = Quaternion.AngleAxis(tiltChange, Vector3.right) * cameraOffset;
-            }
-
-            // Update the camera's position and rotation
-            transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + Input.GetAxis("Mouse X") * rotationSpeed, 0);
-            cameraTransform.position = transform.position + cameraOffset;
-            cameraTransform.rotation = targetRotation;
-        }
+        // Apply rotation to the camera
+        transform.eulerAngles = rotation;
+        transform.eulerAngles += new Vector3(30, 45, 0);
     }
 }

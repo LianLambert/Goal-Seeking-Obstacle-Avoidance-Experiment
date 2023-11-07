@@ -3,7 +3,10 @@ guid: c667f3941b2a740db91cebd90e8419ed
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - chair: {fileID: 4114074422508675985, guid: 94dbdf942abe54d77a1a8809e8c94e61, type: 3}
+  - human: {fileID: 6343041700488822638, guid: 275b2193bacfe407fb1167def0155159, type: 3}
+  - goal: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
