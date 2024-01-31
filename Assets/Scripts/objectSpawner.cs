@@ -9,10 +9,10 @@ public class objectSpawner : MonoBehaviour
     [SerializeField] private GameObject goal;
     [SerializeField] public int numChairs;
     [SerializeField] public int numHumans;
-    private int minX = -24;
-    private int maxX = 23;
-    private int minZ = -49;
-    private int maxZ = 48;
+    private int minX = -14;
+    private int maxX = 13;
+    private int minZ = -24;
+    private int maxZ = 23;
     private float goalTimer = 0;
     private bool goalRespawning = false;
     public List<GameObject> activeObjects = new List<GameObject>();
@@ -21,10 +21,14 @@ public class objectSpawner : MonoBehaviour
     void Start()
     {
         goal = GameObject.FindWithTag("goal");
+
+        // spawn game components
         respawnGoal();
         spawnPrefab(human, numHumans);
         spawnPrefab(chair, numChairs);
     }
+
+    public int avgFrameRate;
 
     // Update is called once per frame
     void Update()
@@ -33,10 +37,15 @@ public class objectSpawner : MonoBehaviour
         goalTimer += Time.deltaTime;
         if ((goal.GetComponent<goal>().goalReached || goalTimer >= 10.0f) && goalRespawning == false)
         {
+            DisableMovementScripts();
             goalRespawning = true;
             Invoke("respawnGoal", 1);
         }
 
+        float current = 0;
+        current = Time.frameCount / Time.time;
+        avgFrameRate = (int)current;
+        Debug.Log((int)(1f / Time.unscaledDeltaTime));
     }
 
 
@@ -78,21 +87,22 @@ public class objectSpawner : MonoBehaviour
     {
         Vector2 spawnPos = GetRandomIntegerPosition();
 
-        // Ensure that the while loop has a reasonable upper limit to prevent infinite loops
-        int maxAttempts = 100;
+        // set an upper limit to ensure no infinite loops
+        int maxAttempts = 500;
         int attempts = 0;
 
+        // find a spawn position that is unoccupied 
         while (Physics.OverlapSphere(new Vector3(spawnPos.x, 0, spawnPos.y), 1).Length != 0 && attempts < maxAttempts)
         {
             spawnPos = GetRandomIntegerPosition();
             attempts++;
         }
 
+        // if unable to find suitable spawn position, return vector 0 and note in console
         if (attempts >= maxAttempts)
         {
-            // Handle the case where no empty spawn position was found after a certain number of attempts
-            Debug.LogError("Failed to find an empty spawn position after " + maxAttempts + " attempts.");
-            return Vector2.zero; // Or some other default value
+            Debug.Log("Failed to find an empty spawn position after " + maxAttempts + " attempts.");
+            return Vector2.zero;
         }
 
         return spawnPos;
@@ -100,17 +110,53 @@ public class objectSpawner : MonoBehaviour
 
     private void respawnGoal()
     {
-        Time.timeScale = 0;
-        // spawn goal in new spot, updating occupiedPositions list
+        Debug.Log(System.DateTime.Now);
+        // disable chair and human scripts
+        DisableMovementScripts();
+
+        // spawn goal in new spot
         Vector3 spawnPos = GetSpawnSquare();
         goal.transform.position = new Vector3(spawnPos.x, 1, spawnPos.y);
 
-        // reset goal timer, goalReached
+        // reset goal timer, goalReached and enable chair/human scripts
         goalTimer = 0.0f;
         goal.GetComponent<goal>().goalReached = false;
         goalRespawning = false;
-        Time.timeScale = 1;
+        EnableMovementScripts();
+
     }
 
-   
+    private void DisableMovementScripts()
+    {
+        // disable chair and human scripts
+        foreach (GameObject activeObject in activeObjects)
+        {
+            if (activeObject.CompareTag("human"))
+            {
+                activeObject.GetComponent<human>().enabled = false;
+            }
+            else if (activeObject.CompareTag("chair"))
+            {
+                activeObject.GetComponent<chair>().enabled = false;
+            }
+        }
+    }
+
+    private void EnableMovementScripts()
+    {
+        // enable chair and human scripts
+        foreach (GameObject activeObject in activeObjects)
+        {
+            if (activeObject.CompareTag("human"))
+            {
+                activeObject.GetComponent<human>().enabled = true;
+            }
+            else if (activeObject.CompareTag("chair"))
+            {
+                activeObject.GetComponent<chair>().enabled = true;
+            }
+        }
+    }
+
+
 }

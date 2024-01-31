@@ -20,7 +20,8 @@ public class human : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!goalScript.goalReached) {
+        if (!goalScript.goalReached)
+        {
 
             // calculate direction to goal
             Vector3 goalPosNoY = new Vector3(goal.transform.position.x, 2, goal.transform.position.z);
@@ -40,7 +41,40 @@ public class human : MonoBehaviour
 
             // calculate translation based on direction to goal and push force
             Vector3 finalPushDirection = new Vector3(totalPushDirection.normalized.x, 0, totalPushDirection.normalized.z);
-            transform.Translate((directionToGoal * speed + finalPushDirection * pushForce) * Time.deltaTime);
+            MoveWithoutOverlap((directionToGoal + finalPushDirection * pushForce).normalized * speed * Time.deltaTime);
+        }
+    }
+
+    void MoveWithoutOverlap(Vector3 movement)
+    {
+        Vector3 originalPosition = transform.position;
+
+        for (int angle = 0; angle < 360; angle += 15)
+        {
+            // rotate the movement vector by angle degrees
+            Vector3 rotatedMovement = Quaternion.Euler(0, angle, 0) * movement;
+            Vector3 newPosition = originalPosition + rotatedMovement;
+
+            // check for overlap with the new position
+            Collider[] rotatedHits = Physics.OverlapSphere(newPosition, 0.4f);
+            bool isOverlap = false;
+
+            // check if there's an overlap with chairs (not goal)
+            foreach (Collider collider in rotatedHits)
+            {
+                if (collider.gameObject.CompareTag("chair") && collider.gameObject != this.gameObject)
+                {
+                    isOverlap = true;
+                    break;
+                }
+            }
+
+            // if a vector is found that does not lead to overlap, move there
+            if (!isOverlap)
+            {
+                transform.Translate(rotatedMovement);
+                return;
+            }
         }
     }
 }
